@@ -4,6 +4,7 @@
 #include <inttypes.h>
 #include "cursor.h"
 
+// maximum number of filters allowed in a filter group
 #define NDB_PACKED_STR     0x1
 #define NDB_PACKED_ID      0x2
 
@@ -391,6 +392,9 @@ int ndb_text_search(struct ndb_txn *txn, const char *query, struct ndb_text_sear
 void ndb_default_text_search_config(struct ndb_text_search_config *);
 void ndb_text_search_config_set_order(struct ndb_text_search_config *, enum ndb_search_order);
 void ndb_text_search_config_set_limit(struct ndb_text_search_config *, int limit);
+
+// QUERY
+void ndb_query(struct ndb_filter **, int num_filters);
 
 // stats
 int ndb_stat(struct ndb *ndb, struct ndb_stat *stat);

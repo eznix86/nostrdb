@@ -33,6 +33,9 @@ static const int THREAD_QUEUE_BATCH = 4096;
 // the maximum size of inbox queues
 static const int DEFAULT_QUEUE_SIZE = 1000000;
 
+// how many filters are allowed in a filter group
+#define NDB_MAX_FILTERS    16
+
 // increase if we need bigger filters
 #define NDB_FILTER_PAGES 64
 
@@ -130,6 +133,31 @@ struct ndb {
 	// lmdb environ handles, etc
 };
 
+struct ndb_filter_group {
+	struct ndb_filter *filters[NDB_MAX_FILTERS];
+	int num_filters;
+};
+
+// We get the KeyMatchResult function from the scan_cursor_type
+// This function is used to match the key for the corresponding cursor type.
+// For example, KIND scanners will look for a kind 
+enum ndb_scan_cursor_type {
+	NDB_SCAN_KIND
+	NDB_SCAN_PK_KIND
+	NDB_SCAN_ID
+};
+
+// same idea as DBScan::ScanCursor in strfry
+struct ndb_scan_cursor {
+	enum ndb_scan_cursor_type type;
+	int outstanding;
+};
+
+// same idea as DBScan in strfry
+struct ndb_dbscan {
+	struct ndb_scan_cursor[12];
+	int num_cursors;
+};
 
 // A clustered key with an id and a timestamp
 struct ndb_tsid {
@@ -786,6 +814,38 @@ void ndb_filter_end_field(struct ndb_filter *filter)
 {
 	filter->elements[filter->num_elements++] = filter->current;
 	filter->current = NULL;
+}
+
+static void ndb_filter_group_init(struct ndb_filter_group *group)
+{
+	group->num_filters = 0;
+}
+
+static int ndb_filter_group_add(struct ndb_filter_group *group,
+				struct ndb_filter *filter)
+{
+	if (group->num_filters + 1 >= MAX_FILTERS)
+		return 0;
+	group->filters[group->num_filters++] = filter;
+}
+
+static int ndb_filter_group_matches(struct ndb_filter_group *group,
+				    struct ndb_note *note)
+{
+	int i;
+	struct ndb_filter *filter;
+
+	if (group->num_filters == 0)
+		return 1;
+
+	for (i = 0; i < group->num_filters; i++) {
+		filter = group->filters[i];
+
+		if (ndb_filter_matches(filter, note))
+			return 1;
+	}
+
+	return 0;
 }
 
 static void ndb_make_search_key(struct ndb_search_key *key, unsigned char *id,
@@ -2088,6 +2148,21 @@ static int ndb_write_note_id_index(struct ndb_txn *txn, struct ndb_note *note,
 	}
 
 	return 1;
+}
+
+static int ndb_filter_query(struct ndb *ndb, struct ndb_filter *filter)
+{
+}
+
+static int ndb_filter_cursors(struct ndb_filter *filter, struct ndb_cursor)
+{
+}
+
+int ndb_query(struct ndb *ndb, struct ndb_filter **filters, int num_filters)
+{
+	struct ndb_filter_group group;
+	ndb_filter_group_init(&group);
+
 }
 
 static int ndb_write_note_kind_index(struct ndb_txn *txn, struct ndb_note *note,

@@ -975,7 +975,7 @@ int main(int argc, const char *argv[]) {
 	test_reaction_counter();
 	test_load_profiles();
 	test_basic_event();
-	test_empty_tags();
+	test_kind_index();
 	test_parse_json();
 	test_parse_contact_list();
 	test_strings_work_before_finalization();
@@ -1002,6 +1002,7 @@ int main(int argc, const char *argv[]) {
 
 	// profiles
 	test_replacement();
+	test_kind_query();
 
 	printf("All tests passed!\n");       // Print this if all tests pass.
 }

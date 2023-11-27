@@ -24,3 +24,5 @@ libsecp256k1.a
 deps/
 testdata/db/*.mdb
 ndb
+
+/target
